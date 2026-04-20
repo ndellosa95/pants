@@ -175,7 +175,7 @@ class BuildctlBinary(BaseBinary):
                 raise ValueError(
                     "docker_image output type field is required when specifying output"
                 ) from ke
-            return output_type == "image" and "name" not in output
+            return output_type in {"image", "registry"} and "name" not in output
         return True
 
     def build_image(
