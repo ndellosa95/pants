@@ -3,6 +3,7 @@
 
 from collections import namedtuple
 from hashlib import sha256
+from typing import cast
 from unittest import mock
 
 import pytest
@@ -40,17 +41,17 @@ BinaryInfo = namedtuple("BinaryInfo", ["cls", "path", "name"])
     ]
 )
 def binary_info(request) -> BinaryInfo:
-    return request.param
+    return cast(BinaryInfo, request.param)
 
 
 @pytest.fixture
 def binary_path(binary_info: BinaryInfo) -> str:
-    return binary_info.path
+    return cast(str, binary_info.path)
 
 
 @pytest.fixture
 def binary(binary_info: BinaryInfo) -> DockerBinary | PodmanBinary:
-    return binary_info.cls(binary_info.path)
+    return cast(DockerBinary | PodmanBinary, binary_info.cls(binary_info.path))
 
 
 @pytest.fixture
@@ -61,7 +62,6 @@ def buildctl_path() -> str:
 @pytest.fixture
 def buildctl(buildctl_path: str) -> BuildctlBinary:
     return BuildctlBinary(buildctl_path)
-
 
 
 def test_binary_build_image(binary_path: str, binary: DockerBinary | PodmanBinary) -> None:
@@ -181,9 +181,7 @@ def test_buildctl_binary_build_image(buildctl_path: str, buildctl: BuildctlBinar
     assert build_request.description == "Building docker image test:0.1.0 +1 additional tag."
 
 
-def test_buildctl_binary_build_image_publish(
-    buildctl_path: str, buildctl: BuildctlBinary
-) -> None:
+def test_buildctl_binary_build_image_publish(buildctl_path: str, buildctl: BuildctlBinary) -> None:
     dockerfile = "src/test/repo/Dockerfile"
     digest = Digest(sha256().hexdigest(), 123)
     tags = (
