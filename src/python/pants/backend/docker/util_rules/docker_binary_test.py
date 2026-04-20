@@ -62,6 +62,7 @@ def test_docker_binary_build_image(docker_path: str, docker: DockerBinary) -> No
         context_root="build/context",
         env=env,
         extra_args=("--pull", "--squash"),
+        output={"type": "docker"},
     )
 
     assert build_request == Process(
@@ -70,6 +71,8 @@ def test_docker_binary_build_image(docker_path: str, docker: DockerBinary) -> No
             "build",
             "--pull",
             "--squash",
+            "--output",
+            "type=docker",
             "--tag",
             tags[0],
             "--tag",
