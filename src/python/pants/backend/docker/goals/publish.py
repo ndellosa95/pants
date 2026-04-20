@@ -112,7 +112,8 @@ async def check_if_skip_push(
             )
     return (
         CheckSkipResult.skip(skip_packaging_only=True)
-        if request.package_fs.pushes_on_package() or options.build_engine == DockerBuildEngine.BUILDCTL
+        if request.package_fs.pushes_on_package()
+        or options.build_engine == DockerBuildEngine.BUILDCTL
         else CheckSkipResult.no_skip()
     )
 
@@ -123,7 +124,10 @@ async def push_docker_images(
     options: DockerOptions,
     options_env_aware: DockerOptions.EnvironmentAware,
 ) -> PublishProcesses:
-    if cast(PublishDockerImageFieldSet, request.field_set).pushes_on_package() or options.build_engine == DockerBuildEngine.BUILDCTL:
+    if (
+        cast(PublishDockerImageFieldSet, request.field_set).pushes_on_package()
+        or options.build_engine == DockerBuildEngine.BUILDCTL
+    ):
         build_process = await get_docker_image_build_process(request.field_set, **implicitly())
         return PublishProcesses(
             [
