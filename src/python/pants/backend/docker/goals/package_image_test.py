@@ -1471,13 +1471,13 @@ def test_docker_cache_from_option(rule_runner: RuleRunner) -> None:
 @pytest.mark.parametrize(
     ["output", "expected_output_arg"],
     [
-        (None, "--output=type=docker"),
-        ({"type": "registry"}, "--output=type=registry"),
-        ({"type": "image", "push": "true"}, "--output=type=image,push=true"),
+        (None, None),
+        ({"type": "registry"}, "type=registry"),
+        ({"type": "image", "push": "true"}, "type=image,push=true"),
     ],
 )
 def test_docker_output_option(
-    rule_runner: RuleRunner, output: dict | None, expected_output_arg: str
+    rule_runner: RuleRunner, output: dict | None, expected_output_arg: str | None
 ) -> None:
     """Testing non-default output type 'image'.
 
@@ -1496,19 +1496,21 @@ def test_docker_output_option(
             ),
         }
     )
+    output_args = ("--output", expected_output_arg) if expected_output_arg else ()
+    expected_argv = (
+        "/dummy/docker",
+        "build",
+        "--pull=False",
+        *output_args,
+        "--tag",
+        "img1:latest",
+        "--file",
+        "docker/test/Dockerfile",
+        ".",
+    )
 
     def check_build_process(result: DockerImageBuildProcess) -> None:
-        assert result.process.argv == (
-            "/dummy/docker",
-            "build",
-            expected_output_arg,
-            "--pull=False",
-            "--tag",
-            "img1:latest",
-            "--file",
-            "docker/test/Dockerfile",
-            ".",
-        )
+        assert result.process.argv == expected_argv
 
     assert_build_process(
         rule_runner,
@@ -1521,7 +1523,7 @@ def test_docker_output_option(
 @pytest.mark.parametrize(
     ["output", "expect_error", "expected_output_arg"],
     [
-        (None, False, "--output=type=docker"),
+        ({"type": "docker"}, False, "type=docker"),
         ({"type": "registry"}, True, None),
         ({"type": "image", "push": "true"}, True, None),
     ],
@@ -1553,8 +1555,9 @@ def test_docker_output_option_when_push_on_package_error(
         assert result.process.argv == (
             "/dummy/docker",
             "build",
-            expected_output_arg,
             "--pull=False",
+            "--output",
+            expected_output_arg,
             "--tag",
             "img1:latest",
             "--file",
@@ -1631,15 +1634,15 @@ def test_docker_output_option_when_push_on_package_error(
 @pytest.mark.parametrize(
     ["output", "expected_output_arg", "expected_message"],
     [
-        (None, "--output=type=docker", None),
+        (None, None, None),
         (
             {"type": "registry"},
-            "--output=type=registry",
+            "type=registry",
             "Docker image docker/test:img1 will push to a registry during packaging",
         ),
         (
             {"type": "image", "push": "true"},
-            "--output=type=image,push=true",
+            "type=image,push=true",
             "Docker image docker/test:img1 will push to a registry during packaging",
         ),
     ],
@@ -1667,11 +1670,12 @@ def test_docker_output_option_when_push_on_package_warn(
 
     # Step 1: Validate Process construction using assert_build_process
     def check_build_process(result: DockerImageBuildProcess) -> None:
+        output_args = ("--output", expected_output_arg) if expected_output_arg else ()
         assert result.process.argv == (
             "/dummy/docker",
             "build",
-            expected_output_arg,
             "--pull=False",
+            *output_args,
             "--tag",
             "img1:latest",
             "--file",
@@ -1752,16 +1756,16 @@ def test_docker_output_option_when_push_on_package_warn(
 
 
 @pytest.mark.parametrize(
-    ["output", "expected_output_arg"],
+    ["output", "expected_output_args"],
     [
         (None, None),
-        ({"type": "docker"}, "--output=type=docker"),
+        ({"type": "docker"}, ["--output", "type=docker"]),
         ({"type": "registry"}, None),
         ({"type": "image", "push": "true"}, None),
     ],
 )
 def test_docker_output_option_when_push_on_package_ignore(
-    rule_runner: RuleRunner, output: dict | None, expected_output_arg: str | None
+    rule_runner: RuleRunner, output: dict | None, expected_output_args: list[str] | None
 ) -> None:
     output_str = f"output={repr(output)}," if output else ""
     rule_runner.write_files(
@@ -1776,6 +1780,7 @@ def test_docker_output_option_when_push_on_package_ignore(
             ),
         }
     )
+    expected_output_args = expected_output_args or []
     docker_options = _setup_docker_options(
         rule_runner, dict(use_buildx=True, push_on_package=DockerPushOnPackageBehavior.IGNORE)
     )
@@ -1783,15 +1788,14 @@ def test_docker_output_option_when_push_on_package_ignore(
     tgt = rule_runner.get_target(Address("docker/test", target_name="img1"))
     under_test_fs = DockerPackageFieldSet.create(tgt)
 
-    if expected_output_arg or output is None:
-        # Step 1: Validate Process construction using assert_build_process
-        output_args = [expected_output_arg] if expected_output_arg else []
+    if expected_output_args or output is None:
+
         def check_build_process(result: DockerImageBuildProcess) -> None:
             assert result.process.argv == (
                 "/dummy/docker",
                 "build",
-                *output_args,
                 "--pull=False",
+                *expected_output_args,
                 "--tag",
                 "img1:latest",
                 "--file",
@@ -1859,7 +1863,7 @@ def test_docker_output_option_when_push_on_package_ignore(
     )
 
     assert result.digest == EMPTY_DIGEST
-    assert len(result.artifacts) == (1 if expected_output_arg else 0)
+    assert len(result.artifacts) == (1 if (output is None or expected_output_args) else 0)
 
 
 def test_docker_build_network_option(rule_runner: RuleRunner) -> None:
@@ -2960,7 +2964,6 @@ def test_docker_build_process_buildctl_engine(rule_runner: RuleRunner) -> None:
                 """\
                 docker_image(
                   name="img1",
-                  output
                   secrets={
                     "system-secret": "/var/run/secrets/mysecret",
                     "target-secret": "./mysecret",
@@ -2999,7 +3002,7 @@ def test_docker_build_process_buildctl_engine(rule_runner: RuleRunner) -> None:
             "--ssh",
             "default",
             "--output",
-            "type=image,name=img1:latest,push=true",
+            "type=image,name=img1:latest",
         )
 
     assert_build_process(
