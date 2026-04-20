@@ -169,6 +169,11 @@ class DockerOptions(Subsystem):
         - `buildkit`: Invoke buildkit directly to build images. (https://github.com/moby/buildkit/blob/master/docs/reference/buildctl.md#build)
         - `podman`: Use Podman to build images. (https://docs.podman.io/en/latest/markdown/podman-build.1.html)
 
+        Valid values for `push` are:
+
+        - `docker`: Use the Docker CLI to push images. (https://docs.docker.com/reference/cli/docker/image/push/)
+        - `podman`: Use Podman to push images. (https://docs.podman.io/en/latest/markdown/podman-push.1.html)
+
         Valid values for `run` are:
 
         - `docker`: Use the Docker CLI to run containers. (https://docs.docker.com/reference/cli/docker/run/)
