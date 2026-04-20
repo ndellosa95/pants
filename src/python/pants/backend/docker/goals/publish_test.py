@@ -321,6 +321,7 @@ def test_check_if_skip_push(
     opts = options or {}
     opts.setdefault("registries", {})
     opts.setdefault("default_repository", "{directory}/{name}")
+    opts.setdefault("engine", DockerEngines())
     docker_options = create_subsystem(DockerOptions, **opts)
     tgt = cast(DockerImageTarget, rule_runner.get_target(address))
     package_fs = DockerPackageFieldSet.create(tgt)
