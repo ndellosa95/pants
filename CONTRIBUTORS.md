@@ -7,6 +7,7 @@ Created as part of the release process.
 + Adam Chainz
 + Adam Retter
 + Aditya Raj Verma
++ Affan Amir Mir
 + Alan Paulin
 + Alan Velasco
 + Aleksandr Artemenkov
@@ -153,6 +154,7 @@ Created as part of the release process.
 + Ity Kaul
 + JC (Jonathan Chen)
 + Jack Evans
++ Jack Jennings
 + Jack Zhao
 + Jackson Davis
 + Jacob Floyd
@@ -337,6 +339,7 @@ Created as part of the release process.
 + Simon Biggs
 + Sion Kang
 + Srikanth Kotagiri
++ Sriram Viswanathan
 + Stefan Sauer
 + Stephan Erb
 + Stephen Hopper
@@ -346,9 +349,11 @@ Created as part of the release process.
 + Sven Widén
 + Tal Amuyal
 + Tansy Arron-Walker
++ Tarek Rached
 + Ted Dziuba
 + Tejal Desai
 + Thales Menato
++ Thani Ath Nain Khurshid
 + Theo Ribeiro
 + Tianshuo Deng
 + Tien Nguyen
@@ -412,6 +417,7 @@ Created as part of the release process.
 + philipp-sontag-by
 + purajit
 + ravi2024sk
++ seungwoo-ji (jeus)
 + sww
 + twunderlich-grapl
 + vladislav doster
