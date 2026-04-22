@@ -14,8 +14,7 @@ from pants.util.strutil import softwrap
 
 class ExternalBinary(ContextualSubsystem):
     @option(help="Version of the binary to use", default=lambda cls: cls.version_default)
-    def version(self) -> str:
-        """Provided by the @option decorator."""
+    def version(self) -> str: ...
 
     exe_help = softwrap(
         """
@@ -29,8 +28,7 @@ class ExternalBinary(ContextualSubsystem):
         raise NotImplementedError("Subclasses must implement to provide the default executable")
 
     @option(help=exe_help, default=lambda cls: cls.exe_default)
-    def exe(self) -> str:
-        """Provided by the @option decorator."""
+    def exe(self) -> str: ...
 
     known_versions_help = softwrap(
         """
@@ -60,8 +58,7 @@ class ExternalBinary(ContextualSubsystem):
     )
 
     @option(help=known_versions_help, default=lambda cls: cls.known_versions_default)
-    def known_versions(self) -> str:
-        """Provided by the @option decorator."""
+    def known_versions(self) -> str: ...
 
     def get_download_request(self) -> ExternalToolRequest:
         known_versions = self.known_versions
