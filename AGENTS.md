@@ -28,7 +28,7 @@ In this repo, `./pants` is a special bootstrap script that runs Pants from the l
 
 ### Test file naming
 
-Test files must be named `*_test.py` (not `test_*.py`). Pants discovers tests by this suffix.
+Test files must be named `*_test.py` (not `test_*.py`). Pants discovers tests by this suffix. Test functions should be named `def test_descriptive_name() -> None:` — all test functions must have a `-> None` return annotation.
 
 ### BUILD file conventions
 
@@ -50,9 +50,9 @@ python_sources(
 )
 ```
 
-All BUILD files must have the copyright header:
+All source and BUILD files must have the copyright header (use the current year for new files):
 ```python
-# Copyright 2024 Pants project contributors (see CONTRIBUTORS.md).
+# Copyright YYYY Pants project contributors (see CONTRIBUTORS.md).
 # Licensed under the Apache License, Version 2.0 (see LICENSE).
 ```
 
@@ -61,14 +61,15 @@ All BUILD files must have the copyright header:
 | Task | Command |
 |------|---------|
 | Run specific test file | `pants test path/to/file_test.py` |
-| Run tests for changed files | `pants --changed-since=HEAD test` |
-| Run tests with transitive deps | `pants --changed-since=HEAD --changed-dependents=transitive test` |
+| Run tests for uncommitted changes | `pants --changed-since=HEAD test` |
+| Run tests for branch changes | `pants --changed-since=main test` |
+| Run tests with transitive deps | `pants --changed-since=main --changed-dependents=transitive test` |
 | Run a single test function | `pants test path/to/file_test.py -- -k test_function_name` |
 | Debug a test (interactive) | `pants test --debug path/to/file_test.py` |
 | Debug with specific test | `pants test --debug path/to/file_test.py -- -k test_name` |
-| Lint changed files | `pants --changed-since=HEAD lint` |
-| Format changed files | `pants --changed-since=HEAD fmt` |
-| Type-check changed files | `pants --changed-since=HEAD check` |
+| Lint changed files | `pants --changed-since=main lint` |
+| Format changed files | `pants --changed-since=main fmt` |
+| Type-check changed files | `pants --changed-since=main check` |
 | List all targets in dir | `pants list path/to/dir:` |
 | Show dependencies | `pants dependencies path/to/target` |
 | Show dependents | `pants dependents path/to/target` |
@@ -78,6 +79,8 @@ All BUILD files must have the copyright header:
 | Run pre-push checks | `build-support/githooks/pre-push` |
 
 ### Test options
+
+Everything after `--` is passed through to pytest. See the [pytest CLI reference](https://docs.pytest.org/en/stable/reference/reference.html#command-line-flags) for available options.
 
 ```bash
 # Run tests matching a pattern
@@ -92,8 +95,8 @@ pants test --timeout-default=0 path/to/file_test.py
 # Show test output even on success
 pants test --output=all path/to/file_test.py
 
-# Force re-run (skip cache)
-pants --no-local-cache test path/to/file_test.py
+# Force re-run (skip test cache, but allow prior steps to use cache)
+pants test --force path/to/file_test.py
 ```
 
 ### Target address syntax
@@ -130,6 +133,8 @@ The repo uses multiple Python resolves configured in `pants.toml`:
 To regenerate lockfiles: `pants generate-lockfiles --resolve=<name>`
 
 ## Engine Architecture
+
+For deeper reading, see the [Rules API concepts](docs/docs/writing-plugins/the-rules-api/concepts.mdx), [union rules](docs/docs/writing-plugins/the-rules-api/union-rules-advanced.mdx), and [internal architecture](docs/docs/contributions/development/internal-architecture.mdx) docs.
 
 ### The Rule Graph
 
@@ -340,15 +345,6 @@ The repo currently targets **Python 3.14** (`interpreter_constraints = ["==3.14.
 - Use 2-space indentation for bullet/numbered lists (or `bullet_list()`)
 - Never use indentation for code blocks; use triple-backtick blocks only
 
-### File headers
-
-All source files must have the copyright header:
-
-```python
-# Copyright 2024 Pants project contributors (see CONTRIBUTORS.md).
-# Licensed under the Apache License, Version 2.0 (see LICENSE).
-```
-
 ### Imports
 
 - Imports are auto-sorted by `isort` (via ruff)
@@ -424,16 +420,10 @@ def target_types():
 
 ## Testing
 
-### Test function naming
-
-- Test files: `*_test.py` (NOT `test_*.py`)
-- Test functions: `def test_descriptive_name() -> None:`
-- All test functions must have `-> None` return annotation
-
 ### Integration vs unit tests
 
-- Unit tests: `*_test.py` - run in normal test target
-- Integration tests: `*_integration_test.py` - get their own BUILD target with longer timeouts
+- Unit tests: `*_test.py` - test individual functions or rules without running Pants
+- Integration tests: `*_integration_test.py` - typically run an instance of Pants; get their own BUILD target with longer timeouts
 
 ```python
 # In BUILD files, integration tests are separated:
@@ -532,10 +522,10 @@ def test_end_to_end() -> None:
 
 ### Before submitting
 
-1. Format: `pants --changed-since=HEAD fmt`
-2. Lint: `pants --changed-since=HEAD lint`
-3. Type-check: `pants --changed-since=HEAD check`
-4. Test: `pants --changed-since=HEAD --changed-dependents=transitive test`
+1. Format: `pants --changed-since=main fmt`
+2. Lint: `pants --changed-since=main lint`
+3. Type-check: `pants --changed-since=main check`
+4. Test: `pants --changed-since=main --changed-dependents=transitive test`
 5. Or run the pre-push hook: `build-support/githooks/pre-push`
 
 ### Commit messages
@@ -561,6 +551,5 @@ For `PythonToolBase` subclasses (PyPI packages):
 
 ### Updating PEX
 
-PEX is special - update both:
-1. The `pex-cli` subsystem in `src/python/pants/backend/python/util_rules/pex_cli.py`
-2. The requirement in `3rdparty/python/requirements.txt` and regenerate lockfile
+PEX is consumed only as a CLI tool (not as a Python requirement):
+1. Update the `pex-cli` subsystem in `src/python/pants/backend/python/util_rules/pex_cli.py`
